@@ -16,11 +16,9 @@ License
    See the License for the specific language governing permissions and
    limitations under the License.
 ```
-
-
+---
 Necessario python 3.9.10
-
-comando per eseguire il launcher:
+Comando per eseguire il launcher:
 ```
 py .\embdi_launcher.py --ds1 beer/beer-tableA.csv --ds2 beer/beer-tableB.csv --sep "," --info info_beer --out beer_output
 ```
