@@ -1,0 +1,3 @@
+0_country_region,1_countryname
+0_iso3,1_countrycode
+0_deaths,1_confirmedcases
