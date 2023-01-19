@@ -1,6 +1,4 @@
 # EmbDI
-fork modificata e adattata alle nostre esigenze della repo https://gitlab.eurecom.fr/cappuzzo/embdi
-
 
 comando launcher:
 ```
