@@ -14,7 +14,8 @@ def parse_args():
 
     return parser.parse_args()
 
-
+# costruisce un oggetto in base alla ground truth:
+# --> {'0_countrycode': {'1_iso3', '1_iso7'}, '0_countryname': {'1_country_region'}, '0_confirmeddeaths': {'1_deaths'}}
 def read_matches(match_file):
     with open(match_file, 'r', encoding='utf-8') as fp:
         md = {}
@@ -29,7 +30,7 @@ def read_matches(match_file):
 
 
 def _clean_embeddings(emb_file, matches):
-    gt = set()
+    gt = set() # valori univoci presenti nella ground truth
     for k, v in matches.items():
         gt.add(k)
         for _ in v:
@@ -38,21 +39,21 @@ def _clean_embeddings(emb_file, matches):
     with open(emb_file, 'r') as fp:
         s = fp.readline()
         _, dimensions = s.strip().split(' ')
-        viable_idx = []
+        viable_idx = [] # contiene l'intera riga dell'embedding che ha un column id presente nella ground truth
         for idx, row in enumerate(fp):
             r = row.split(' ', maxsplit=1)[0]
             # r = 'cid__' + r
             if r.startswith('cid__'):
                 r = r.strip('cid__')
-            if r in gt:
-                viable_idx.append(row.strip('cid__'))
+                viable_idx.append(row.strip('cid__')) # questa riga prima stava dentro l'if commentato sotto, evita di estrarre solo i match basati sulla ground truth
+            #if r in gt:
 
     f = 'pipeline/dump/sm_dump.emb'
     with open(f, 'w', encoding='utf-8') as fp:
         fp.write('{} {}\n'.format(len(viable_idx), dimensions))
         for _ in viable_idx:
             fp.write(_)
-    return f
+    return f # file embedding contenente solamente le righe che matchano la ground truth --> screma file embedding con elementi corrispondenti
 
 
 def _infer_prefix(df):
@@ -64,10 +65,12 @@ def _infer_prefix(df):
         return list(prefixes)
 
 
-def _match(candidates, maxrank=3):
-    to_be_matched = list(candidates.keys())
-    misses = {k: 0 for k in candidates}
+def _match(candidates, maxrank):
 
+    maxrank = int(maxrank) # maxrank non viene usato correttamente, se settato a 0 o 50 l'algoritmo caccia gli stessi risultat
+
+    to_be_matched = list(candidates.keys())
+    misses = {k: 0 for k in candidates} # aggiunge il campo "0" a ogni candidato
     mm = []
 
     while len(to_be_matched) > 0:
@@ -81,11 +84,13 @@ def _match(candidates, maxrank=3):
                     continue
                 else:
                     closest_list = candidates[item]
+
                     if len(closest_list) > 0:
                         for idx in range(len(closest_list)):
                             closest_to_item = closest_list[idx]
                             reciprocal_closest_list = candidates[closest_to_item]
                             reciprocal_closest = reciprocal_closest_list[0]
+
                             if closest_to_item in to_be_matched and reciprocal_closest == item:
                                 to_be_matched.remove(item)
                                 to_be_matched.remove(closest_to_item)
@@ -107,6 +112,7 @@ def _extract_candidates(wv, dataset):
     candidates = []
     for _1 in range(len(dataset.columns)):
         for _2 in range(0, len(dataset.columns)):
+
             if _1 == _2:
                 continue
             c1 = f'{dataset.columns[_1]}'
@@ -116,9 +122,11 @@ def _extract_candidates(wv, dataset):
             try:
                 rank = wv.distance(c1, c2)
                 tup = (c1, c2, rank)
-                candidates.append(tup)
+                candidates.append(tup) # mette in candidates tutte le coppie di colonne che matchano la ground truth e la loro distanza
             except KeyError:
                 continue
+
+    # sistema i nomi dei candidati
     cleaned = []
     for k in candidates:
         prefix = k[0].split('_')[0]
@@ -127,6 +135,9 @@ def _extract_candidates(wv, dataset):
 
     cleaned_sorted = sorted(cleaned, key=itemgetter(0, 2), reverse=False)
 
+    # restituisce la lista di  "chiave, lista colonne che matchano la ground truth"
+    # {'0_confirmeddeaths': ['1_deaths', '1_iso3', '1_country_region'],
+    # '0_countrycode': ['1_country_region', '1_iso3', '1_deaths'], ...
     candidates = {}
     for value in cleaned_sorted:
         v1, v2, rank = value
@@ -134,12 +145,11 @@ def _extract_candidates(wv, dataset):
             candidates[v1] = [v2]
         else:
             candidates[v1].append(v2)
-
     return candidates
 
 
-def _produce_match_results(candidates):
-    match_results = _match(candidates)
+def _produce_match_results(candidates, maxrank):
+    match_results = _match(candidates, maxrank) #ritorna mm --> lista di coppie di colonne vicine
 
     match_results = [sorted(_) for _ in match_results]
 
@@ -153,16 +163,16 @@ def match_columns(configuration, embeddings_file):
     dataset = pd.read_csv(configuration['dataset_file'])
     print('# Executing SM tests.')
     match_file = configuration['match_file']
-    ground_truth = read_matches(match_file)
-    emb_file = _clean_embeddings(embeddings_file, ground_truth)
+    ground_truth = read_matches(match_file) # ritorna md ovvero un dizionario di coppie chiave valore contenente la ground truth
+    emb_file = _clean_embeddings(embeddings_file, ground_truth) # ritorna un file embedding contenente solamente le righe che matchano la ground truth --> screma file embedding con elementi corrispondenti
 
     if emb_file is None:
         return []
     wv = models.KeyedVectors.load_word2vec_format(emb_file, unicode_errors='ignore')
-  
-    print('Model built from file {}'.format(embeddings_file))
-    candidates = _extract_candidates(wv, dataset)
-    match_results = _produce_match_results(candidates)
+    #print('Model built from file {}'.format(emb_file))
+
+    candidates = _extract_candidates(wv, dataset) # restituisce la lista di  "chiave, lista colonne che matchano la ground truth"
+    match_results = _produce_match_results(candidates, configuration['max_rank']) # filtra via i risultati sotto soglia
 
     return match_results
 
