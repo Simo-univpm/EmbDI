@@ -1,10 +1,45 @@
-# 1 - leggi e carica i datasets
-# 2 - concatena horizon
-# 3 - scrivi ds (script)
-# 4 - genera edgelist ds
-# 5 - SCRIVERE MATCH FILE A MANO 
-# 6 - genera config files (script)
-# 7 - sposta files al posto giusto
+#####################################################################################################################################################
+# Utility che aiuta nell'utizillo di EmbDI;                                                                                                         #
+# questo script genera i file necessari per                                                                                                         #
+# effettuare il task di schema matching tramite EmbDI.                                                                                              #
+#                                                                                                                                                   #
+# Lo script si occupa di:                                                                                                                           #
+#                                                                                                                                                   #
+#   1 - Caricare due datasets specificati in input                                                                                                  #
+#                                                                                                                                                   #
+#   2 - Concatenarli secondo la formattazione necessaria                                                                                            #
+#       (impostando il parametro "concatenate": "horizon"                                                                                           #
+#       nell'oggetto parameters)                                                                                                                    #
+#                                                                                                                                                   #
+#   3 - Effettuare il preprocessing del dataset concatenato                                                                                         #
+#                                                                                                                                                   #
+#   4 - Scrivere il nuovo dataset concatenato su disco                                                                                              #
+#                                                                                                                                                   #
+#   5 - Generare l'info file del nuovo dataset                                                                                                      #
+#                                                                                                                                                   #
+#   6 - Generare l'edgelist relativa al nuovo ds                                                                                                    #
+#                                                                                                                                                   #
+#                                                                                                                                                   #
+#                                                                                                                                                   #
+# E' possibile eseguire questo script seguendo la seguente sintassi:                                                                                #
+# py .\embdi_launcher.py --ds1 <primo_dataset.csv> --ds2 <secondo_dataset.csv> --sep "," --info mio_info_file --out mio_dataset_concatenato         #
+#                                                                                                                                                   #
+# dove:                                                                                                                                             #
+#   args.ds1 ->  primo dataset csv                                                                                                                  #
+#   args.ds2 ->  secondo dataset csv                                                                                                                #
+#   args.sep ->  carattere separatore per il csv                                                                                                    #
+#   args.info -> nome info file                                                                                                                     #
+#   args.out ->  nome output file                                                                                                                   #
+#                                                                                                                                                   #
+# Esempio:                                                                                                                                          #
+# py .\embdi_launcher.py --ds1 beer/beer-tableA.csv --ds2 beer/beer-tableB.csv --sep "," --info info_beer --out beer_output                         #
+#                                                                                                                                                   #
+#                                                                                                                                                   #
+# NOTA 1: i datasets devono essere presenti nella directory "./pipeline/datasets"                                                                   #
+# NOTA 2: i files generati saranno spostati nelle corrette directory di EmbDI automaticamente                                                       #
+# NOTA 3: il file matches contenente la ground truth deve essere generata manualmente e inserita in ./pipeline/matches/sm-matches/                  #
+#####################################################################################################################################################
+
 
 import os
 import argparse
@@ -47,21 +82,19 @@ def launcher(ds1, ds2, separatore, nome_info_file, nome_output_file):
     print("preprocessing e concatenamento dei datasets...")
     df_c = dp.data_preprocessing([df1, df2], parameters)
 
-    # scrittura file info dei ds
-    print("salvataggio info file...")
-    dp.write_info_file([df1, df2], nome_info_file, [f1, f2])
-
     # scrittura su disco del ds
-    print("salvataggio datasets concatenati...")
     df_c.to_csv(PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv", index=False)
+    print("[" + ds1 + "]" + " concatenato con [" + ds2 + "] scritto su [" + PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv]")
+
+    # scrittura file info dei ds
+    dp.write_info_file([df1, df2], nome_info_file, [f1, f2])
+    print("info file scritto su [" + PATH + "/pipeline/info/" + nome_info_file + ".txt]")
 
     # generazione edgelist del dataset concatenato
-    print("generazione edgelist...")
     input_edgelist = PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv"
     output_edgelist = PATH + "/pipeline/er_edgelist/" + nome_output_file + "_edgelist.txt"
-
-    # TODO: aggiustare os.system
     os.system(PATH + "/EmbDI/edgelist.py -i " + input_edgelist + "-o " + output_edgelist)
+    print("edgelist scritta su [" + PATH + "/pipeline/er_edgelist/" + nome_output_file + "_edgelist.txt]")
 
 def parse_args():
 
@@ -75,12 +108,6 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
-
-    # argv[1] -> primo dataset csv
-    # argv[2] -> secondo dataset csv
-    # argv[3] -> carattere separatore per il csv
-    # argv[4] -> nome info file 
-    # argv[5] -> nome output file 
 
     args = parse_args()
     launcher(args.ds1, args.ds2, args.sep, args.info, args.out)
