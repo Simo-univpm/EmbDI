@@ -39,21 +39,29 @@ def _clean_embeddings(emb_file, matches):
     with open(emb_file, 'r') as fp:
         s = fp.readline()
         _, dimensions = s.strip().split(' ')
-        viable_idx = [] # contiene l'intera riga dell'embedding che ha un column id presente nella ground truth
+
+        # viable_idx contiene l'intera riga dell'embedding 
+        # che ha un column id presente nella ground truth
+        viable_idx = []
+
         for idx, row in enumerate(fp):
             r = row.split(' ', maxsplit=1)[0]
             # r = 'cid__' + r
             if r.startswith('cid__'):
                 r = r.strip('cid__')
-                viable_idx.append(row.strip('cid__')) # questa riga prima stava dentro l'if commentato sotto, evita di estrarre solo i match basati sulla ground truth
-            #if r in gt:
+
+                # evita di estrarre solo i match basati sulla ground truth
+                viable_idx.append(row.strip('cid__'))
 
     f = 'pipeline/dump/sm_dump.emb'
     with open(f, 'w', encoding='utf-8') as fp:
         fp.write('{} {}\n'.format(len(viable_idx), dimensions))
         for _ in viable_idx:
             fp.write(_)
-    return f # file embedding contenente solamente le righe che matchano la ground truth --> screma file embedding con elementi corrispondenti
+
+    # ritorna file embedding contenente solamente le righe che matchano
+    # la ground truth --> screma file embedding con elementi corrispondenti
+    return f
 
 
 def _infer_prefix(df):
@@ -67,25 +75,20 @@ def _infer_prefix(df):
 
 def _match(candidates, maxrank):
 
-    maxrank = int(maxrank) # maxrank non viene usato correttamente, se settato a 0 o 50 l'algoritmo caccia gli stessi risultati
+    # importato correttamente il parametro maxrank
+    maxrank = int(maxrank) 
 
     to_be_matched = list(candidates.keys())
     misses = {k: 0 for k in candidates} # aggiunge il campo "0" a ogni candidato
     mm = []
 
     while len(to_be_matched) > 0:
-        #tbm = to_be_matched.copy.deepcopy()
         tbm = to_be_matched.copy()
         for item in tbm:
             if item not in to_be_matched:
                 continue
-            #else:
-            #    if misses[item] > maxrank:
-            #        to_be_matched.remove(item)
-            #        continue
             else:
                 closest_list = candidates[item] #c'
-
                 if len(closest_list) > 0:
                     for idx in range(len(closest_list)):
                         closest_to_item = closest_list[idx]
@@ -105,12 +108,13 @@ def _match(candidates, maxrank):
                         else:
                             misses[item] += 1
                     
-                        if misses[item] == maxrank: # spostate righe 82-85 qui, poiché non venivano eseguite
+                        # in questa posizione viene considerato il giusto item
+                        if misses[item] == maxrank:
                             to_be_matched.remove(item)
                             break
 
                 else:
-                    to_be_matched.remove(item) # con l'else non viene mai hittato questo statement e 
+                    to_be_matched.remove(item)
     return mm
 
 
@@ -169,16 +173,24 @@ def match_columns(configuration, embeddings_file):
     dataset = pd.read_csv(configuration['dataset_file'])
     print('# Executing SM tests.')
     match_file = configuration['match_file']
-    ground_truth = read_matches(match_file) # ritorna md ovvero un dizionario di coppie chiave valore contenente la ground truth
-    emb_file = _clean_embeddings(embeddings_file, ground_truth) # ritorna un file embedding contenente solamente le righe che matchano la ground truth --> screma file embedding con elementi corrispondenti
+
+    # ritorna md ovvero un dizionario di coppie chiave valore contenente la ground truth
+    ground_truth = read_matches(match_file)
+
+    # ritorna un file embedding contenente solamente le righe che matchano la ground truth
+    # --> screma file embedding con elementi corrispondenti
+    emb_file = _clean_embeddings(embeddings_file, ground_truth)
 
     if emb_file is None:
         return []
     wv = models.KeyedVectors.load_word2vec_format(emb_file, unicode_errors='ignore')
     #print('Model built from file {}'.format(emb_file))
 
-    candidates = _extract_candidates(wv, dataset) # restituisce la lista di  "chiave, lista colonne che matchano la ground truth"
-    match_results = _produce_match_results(candidates, configuration['max_rank']) # filtra via i risultati sotto soglia
+    # restituisce la lista di  "chiave, lista colonne che matchano la ground truth"
+    candidates = _extract_candidates(wv, dataset)
+
+    # filtra via i risultati sotto soglia
+    match_results = _produce_match_results(candidates, configuration['max_rank'])
 
     return match_results
 

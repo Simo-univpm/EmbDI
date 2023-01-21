@@ -40,4 +40,6 @@ def match_driver(embeddings_file, df, configuration):
                                  task='match')
     print('Extracting matched columns')
     m_columns = match_columns(configuration, embeddings_file)
+    
     return m_tuples, m_columns
+
