@@ -67,44 +67,50 @@ def _infer_prefix(df):
 
 def _match(candidates, maxrank):
 
-    maxrank = int(maxrank) # maxrank non viene usato correttamente, se settato a 0 o 50 l'algoritmo caccia gli stessi risultat
+    maxrank = int(maxrank) # maxrank non viene usato correttamente, se settato a 0 o 50 l'algoritmo caccia gli stessi risultati
 
     to_be_matched = list(candidates.keys())
     misses = {k: 0 for k in candidates} # aggiunge il campo "0" a ogni candidato
     mm = []
 
     while len(to_be_matched) > 0:
+        #tbm = to_be_matched.copy.deepcopy()
         tbm = to_be_matched.copy()
         for item in tbm:
             if item not in to_be_matched:
                 continue
+            #else:
+            #    if misses[item] > maxrank:
+            #        to_be_matched.remove(item)
+            #        continue
             else:
-                if misses[item] > maxrank:
-                    to_be_matched.remove(item)
-                    continue
+                closest_list = candidates[item] #c'
+
+                if len(closest_list) > 0:
+                    for idx in range(len(closest_list)):
+                        closest_to_item = closest_list[idx]
+                        reciprocal_closest_list = candidates[closest_to_item]
+                        reciprocal_closest = reciprocal_closest_list[0] #c''
+
+                        if closest_to_item in to_be_matched and reciprocal_closest == item:
+                            to_be_matched.remove(item)
+                            to_be_matched.remove(closest_to_item)
+                            mm.append((item, closest_to_item)) # match tra colonne c e c'' trovato
+                            for k in candidates:
+                                if item in candidates[k]:
+                                    candidates[k].remove(item)
+                                if closest_to_item in candidates[k]:
+                                    candidates[k].remove(closest_to_item)
+                            break
+                        else:
+                            misses[item] += 1
+                    
+                        if misses[item] == maxrank: # spostate righe 82-85 qui, poiché non venivano eseguite
+                            to_be_matched.remove(item)
+                            break
+
                 else:
-                    closest_list = candidates[item]
-
-                    if len(closest_list) > 0:
-                        for idx in range(len(closest_list)):
-                            closest_to_item = closest_list[idx]
-                            reciprocal_closest_list = candidates[closest_to_item]
-                            reciprocal_closest = reciprocal_closest_list[0]
-
-                            if closest_to_item in to_be_matched and reciprocal_closest == item:
-                                to_be_matched.remove(item)
-                                to_be_matched.remove(closest_to_item)
-                                mm.append((item, closest_to_item))
-                                for k in candidates:
-                                    if item in candidates[k]:
-                                        candidates[k].remove(item)
-                                    if closest_to_item in candidates[k]:
-                                        candidates[k].remove(closest_to_item)
-                                break
-                            else:
-                                misses[item] += 1
-                    else:
-                        to_be_matched.remove(item)
+                    to_be_matched.remove(item) # con l'else non viene mai hittato questo statement e 
     return mm
 
 
