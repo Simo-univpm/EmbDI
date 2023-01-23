@@ -93,7 +93,7 @@ def launcher(ds1, ds2, separatore, nome_info_file, nome_output_file):
     # generazione edgelist del dataset concatenato
     input_edgelist = PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv"
     output_edgelist = PATH + "/pipeline/er_edgelist/" + nome_output_file + "_edgelist.txt"
-    os.system(PATH + "/EmbDI/edgelist.py -i " + input_edgelist + "-o " + output_edgelist)
+    os.system(PATH + "/EmbDI/edgelist.py -i " + input_edgelist + " -o " + output_edgelist)
     print("edgelist scritta su [" + PATH + "/pipeline/er_edgelist/" + nome_output_file + "_edgelist.txt]")
 
 def parse_args():
