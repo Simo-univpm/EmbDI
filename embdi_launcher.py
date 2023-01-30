@@ -64,7 +64,7 @@ def launcher(ds1, ds2, separatore, nome_info_file, nome_output_file):
     }
 
     # carica il primo ds
-    print("lettura datasets...")
+    print("> lettura datasets...\n")
     f1 = '{}/pipeline/datasets/{}'.format(PATH, ds1)
     df1 = pd.read_csv(f1, sep = separatore)
     for c in df1.columns:
@@ -79,22 +79,22 @@ def launcher(ds1, ds2, separatore, nome_info_file, nome_output_file):
             df2[c] = df2[c].str.replace("_", " ")
 
     # preprocessing dei dati
-    print("preprocessing e concatenamento dei datasets...")
+    print("> preprocessing e concatenamento dei datasets...\n")
     df_c = dp.data_preprocessing([df1, df2], parameters)
 
     # scrittura su disco del ds
     df_c.to_csv(PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv", index=False)
-    print("[" + ds1 + "]" + " concatenato con [" + ds2 + "] scritto su [" + PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv]")
+    print("\n> datasets concatenati scritti su [" + PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv]\n")
 
     # scrittura file info dei ds
-    dp.write_info_file([df1, df2], nome_info_file, [f1, f2])
-    print("info file scritto su [" + PATH + "/pipeline/info/" + nome_info_file + ".txt]")
+    dp.write_info_file([df1, df2],  PATH + "/pipeline/info/" + nome_info_file + ".txt" , [f1, f2])
+    print("> info file scritto su [" + PATH + "/pipeline/info/" + nome_info_file + ".txt]")
 
     # generazione edgelist del dataset concatenato
-    input_edgelist = PATH + "/pipeline/datasets/" + parameters["output_file"] + ".csv"
-    output_edgelist = PATH + "/pipeline/er_edgelist/" + nome_output_file + "_edgelist.txt"
+    input_edgelist = PATH + "/pipeline/datasets/covid/" + parameters["output_file"] + ".csv"
+    output_edgelist = PATH + "/pipeline/er_edgelists/covid/" + nome_output_file + "_edgelist.txt"
     os.system(PATH + "/EmbDI/edgelist.py -i " + input_edgelist + " -o " + output_edgelist)
-    print("edgelist scritta su [" + PATH + "/pipeline/er_edgelist/" + nome_output_file + "_edgelist.txt]")
+    print("> edgelist scritta su [" + output_edgelist + "]\n")
 
 def parse_args():
 
