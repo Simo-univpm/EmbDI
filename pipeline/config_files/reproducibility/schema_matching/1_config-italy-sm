@@ -1,4 +1,4 @@
-task:test
+task:match
 input_file:pipeline/er_edgelists/1_edgelist.txt
 dataset_info:pipeline/info/1_info_italy.txt
 output_file:1_italy_sm
@@ -9,7 +9,7 @@ dataset_file:pipeline/datasets/italy/1_italy_concatenato.csv
 match_file:pipeline/matches/sm-matches/1_matches.txt
 ntop:10
 ncand:1
-max_rank:3
+max_rank:30
 follow_sub:false
 smoothing_method:no
 backtrack:true
