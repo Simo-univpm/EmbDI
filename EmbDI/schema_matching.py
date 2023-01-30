@@ -158,9 +158,9 @@ def _extract_candidates(wv, dataset):
     return candidates
 
 
-def _produce_match_results(candidates, maxrank):
-    match_results = _match(candidates, maxrank) #ritorna mm --> lista di coppie di colonne vicine
+def _produce_match_results(candidates, configuration):
 
+    match_results = _match(candidates, configuration["max_rank"]) #ritorna mm --> lista di coppie di colonne vicine
     match_results = [sorted(_) for _ in match_results]
 
     # refactored_match_results = [(int(_[0].split('_')[1]), int(_[1].split('_')[1])) for _ in match_results]
@@ -190,7 +190,7 @@ def match_columns(configuration, embeddings_file):
     candidates = _extract_candidates(wv, dataset)
 
     # filtra via i risultati sotto soglia
-    match_results = _produce_match_results(candidates, configuration['max_rank'])
+    match_results = _produce_match_results(candidates, configuration)
 
     return match_results
 
@@ -207,7 +207,7 @@ def schema_matching(embeddings_file, configuration):
 
     candidates = _extract_candidates(wv, dataset)
 
-    match_results = _produce_match_results(candidates)
+    match_results = _produce_match_results(candidates, configuration)
 
     count_hits = 0
     gt = 0
