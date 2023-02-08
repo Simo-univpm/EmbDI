@@ -1,0 +1,4 @@
+Datasets disponibili al seguente link:
+https://learn.microsoft.com/en-us/azure/open-datasets/dataset-covid-19-data-lake
+
+Scaricarli ed inserirli nella directory di questo file di testo.

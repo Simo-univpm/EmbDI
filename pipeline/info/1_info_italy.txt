@@ -1,2 +1,0 @@
-C:/Users/Simo/Desktop/progetto ngdb/data lakes/datalakes_etl/1_Covid_policy_tracker_italy.csv,938
-C:/Users/Simo/Desktop/progetto ngdb/data lakes/datalakes_etl/1_Data_Lake_Italy.csv,20720
